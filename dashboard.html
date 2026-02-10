@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Hub – Lost & Found</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#7c3aed">
+
+  <!-- iOS support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-black text-white p-4 min-h-screen">
+
+  <!-- HEADER -->
+  <div class="max-w-4xl mx-auto flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold bg-clip-text text-transparent
+               bg-gradient-to-r from-purple-400 to-cyan-400">
+      Student Hub – Lost & Found
+    </h1>
+
+    <div class="flex items-center gap-4">
+      <!-- NOTIFICATION BELL -->
+      <div class="relative">
+        <button onclick="toggleNotifications()" id="notifBellBtn" class="p-2 rounded-xl bg-purple-500/20 text-purple-400 
+                 border border-purple-500/30 hover:bg-purple-500/30 
+                 transition relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <!-- Notification Badge -->
+          <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white 
+                text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+            0
+          </span>
+        </button>
+
+        <!-- NOTIFICATION DROPDOWN -->
+        <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto
+             bg-[#1a1a1a] rounded-2xl border border-white/20 shadow-2xl z-50">
+          <div class="p-4 border-b border-white/10">
+            <h3 class="text-lg font-semibold text-purple-400">Notifications</h3>
+          </div>
+          <div id="notifList" class="p-2">
+            <p class="text-gray-500 text-sm text-center py-4">No notifications yet</p>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="logout()" class="px-5 py-2 rounded-xl
+               bg-red-500/20 text-red-400 border border-red-500/30
+               hover:bg-red-500/30 transition">
+        Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- POST ITEM -->
+  <div class="max-w-4xl mx-auto bg-white/10 p-6 rounded-2xl mb-8
+              backdrop-blur-xl border border-white/20">
+
+    <h2 class="text-xl font-semibold mb-4 text-cyan-400">Post Item</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <select id="type" class="px-4 py-2 rounded-xl bg-black/40 border border-white/20">
+        <option value="lost">Lost</option>
+        <option value="found">Found</option>
+      </select>
+
+      <select id="category" class="px-4 py-2 rounded-xl bg-black/40 border border-white/20">
+        <option>ID Card</option>
+        <option>Wallet</option>
+        <option>Electronics</option>
+        <option>Books</option>
+        <option>Others</option>
+      </select>
+
+      <input id="title" placeholder="Item title"
+        class="md:col-span-2 px-4 py-2 rounded-xl bg-black/40 border border-white/20" />
+
+      <textarea id="description" placeholder="Description" rows="3"
+        class="md:col-span-2 px-4 py-2 rounded-xl bg-black/40 border border-white/20"></textarea>
+
+      <input id="location" placeholder="Location"
+        class="md:col-span-2 px-4 py-2 rounded-xl bg-black/40 border border-white/20" />
+
+      <input id="phone" placeholder="Mobile number (10 digits)" maxlength="10"
+        class="md:col-span-2 px-4 py-2 rounded-xl bg-black/40 border border-white/20" />
+    </div>
+
+    <button onclick="postItem()" class="mt-6 w-full py-3 rounded-xl font-semibold
+             bg-gradient-to-r from-purple-600 to-cyan-500
+             hover:opacity-90 transition">
+      Post Item
+    </button>
+
+    <p id="msg" class="text-sm text-red-400 mt-3"></p>
+  </div>
+
+  <!-- ITEMS -->
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-2xl font-semibold mb-4 text-purple-400">All Items</h2>
+    <div id="items" class="space-y-5"></div>
+  </div>
+
+  <!-- RESOLVE MODAL -->
+  <div id="resolveModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
+
+    <div class="bg-[#0b0b0b] p-6 rounded-2xl w-80
+                border border-white/20 shadow-2xl">
+
+      <h3 class="text-lg font-semibold mb-3 text-purple-400">
+        Mark as Resolved?
+      </h3>
+
+      <p class="text-sm text-gray-400 mb-5">
+        This will permanently remove the item.
+      </p>
+
+      <div class="flex justify-end gap-3">
+        <button onclick="closeResolveModal()" class="px-4 py-2 rounded-xl
+                 bg-white/10 border border-white/20
+                 hover:bg-white/20 transition">
+          Cancel
+        </button>
+
+        <button id="confirmResolveBtn" class="px-5 py-2 rounded-xl font-semibold
+                 bg-gradient-to-r from-purple-600 to-cyan-500
+                 shadow-[0_0_20px_rgba(168,85,247,0.6)]
+                 hover:shadow-[0_0_35px_rgba(34,211,238,0.9)]
+                 hover:-translate-y-0.5 active:scale-95
+                 transition-all">
+          ✅ OK
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATCH DETAILS MODAL -->
+  <div id="matchModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+
+    <div class="bg-[#0b0b0b] p-6 rounded-2xl w-full max-w-md
+                border border-white/20 shadow-2xl">
+
+      <h3 class="text-xl font-semibold mb-4 text-cyan-400">
+        🎉 Potential Match Found!
+      </h3>
+
+      <div id="matchContent" class="space-y-4">
+        <!-- Dynamic content will be inserted here -->
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6">
+        <button onclick="closeMatchModal()" class="px-4 py-2 rounded-xl
+                 bg-white/10 border border-white/20
+                 hover:bg-white/20 transition">
+          Close
+        </button>
+
+        <button onclick="viewMatchedItem()" class="px-5 py-2 rounded-xl font-semibold
+                 bg-gradient-to-r from-purple-600 to-cyan-500
+                 shadow-[0_0_20px_rgba(168,85,247,0.6)]
+                 hover:shadow-[0_0_35px_rgba(34,211,238,0.9)]
+                 hover:-translate-y-0.5 active:scale-95
+                 transition-all">
+          📞 View Contact
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="dashboard.js"></script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
+    }
+  </script>
+
+</body>
+
+</html>
+
+
+
+<!--
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+</script>
+-->
