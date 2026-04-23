@@ -16,6 +16,15 @@ onAuthStateChanged(auth, user => {
   if (authResolved) return;
   authResolved = true;
   if (!user) return window.location.replace("index.html");
+  // Set avatar initials
+  if (user.displayName) {
+    const parts = user.displayName.trim().split(/\s+/);
+    const initials = parts.length >= 2
+      ? parts[0][0] + parts[parts.length - 1][0]
+      : parts[0].slice(0, 2);
+    const avatarEl = $("userAvatar");
+    if (avatarEl) avatarEl.textContent = initials.toUpperCase();
+  }
   loadItems();
   loadNotifications(user.uid);
   requestNotificationPermission();
@@ -75,11 +84,11 @@ async function createMatchNotification(lostItem, foundItem, score, matchDetails)
 
   const baseNotif = { lostItemId: lostItem.id, foundItemId: foundItem.id, matchScore: score, matchDetails, read: false, createdAt: serverTimestamp() };
 
-  const lostNotif = { ...baseNotif, userId: lostItem.uid, userEmail: lostItem.email, type: "match_found", title: "🎉 Potential Match Found!", message: `Your lost "${lostItem.title}" may match a found item "${foundItem.title}" near "${foundItem.location}".` };
+  const lostNotif = { ...baseNotif, userId: lostItem.uid, userEmail: lostItem.email, type: "match_found", title: "Potential Match Found!", message: `Your lost "${lostItem.title}" may match a found item "${foundItem.title}" near "${foundItem.location}".` };
   await addDoc(collection(db, "notifications"), lostNotif);
   if (user?.uid === lostItem.uid) showPushNotification(lostNotif.title, lostNotif.message);
 
-  const foundNotif = { ...baseNotif, userId: foundItem.uid, userEmail: foundItem.email, type: "match_found", title: "🎉 Someone may be looking for this!", message: `Your found "${foundItem.title}" may belong to someone who lost "${lostItem.title}".` };
+  const foundNotif = { ...baseNotif, userId: foundItem.uid, userEmail: foundItem.email, type: "match_found", title: "Someone may be looking for this!", message: `Your found "${foundItem.title}" may belong to someone who lost "${lostItem.title}".` };
   await addDoc(collection(db, "notifications"), foundNotif);
   if (user?.uid === foundItem.uid) showPushNotification(foundNotif.title, foundNotif.message);
 
@@ -106,6 +115,7 @@ async function findMatches(newItem) {
 window.postItem = async () => {
   const [type, category, title, description, location, phone] = ["type", "category", "title", "description", "location", "phone"].map(id => $(id).value.trim());
   const msg = $("msg");
+  msg.style.color = '#f87171';
   msg.innerText = "";
 
   if (!title || !description || !location || !phone) return msg.innerText = "Please fill all fields";
@@ -115,12 +125,16 @@ window.postItem = async () => {
   if (!user) return msg.innerText = "Session expired. Please login again.";
 
   const docRef = await addDoc(collection(db, "items"), { type, category, title, description, location, phone, email: user.email, uid: user.uid, status: "open", createdAt: serverTimestamp(), expiresAt: Date.now() + 3 * 24 * 60 * 60 * 1000 });
-  msg.innerText = "Item posted! Searching for matches...";
 
   const matchCount = await findMatches({ id: docRef.id, type, category, title, description, location, phone, email: user.email, uid: user.uid });
-  msg.innerText = matchCount > 0 ? `✅ Item posted! Found ${matchCount} potential match${matchCount > 1 ? 'es' : ''}!` : "✅ Item posted successfully! We'll notify you if we find matches.";
+  msg.style.color = '#86efac';
+  msg.innerText = matchCount > 0 ? `Item posted! Found ${matchCount} potential match${matchCount > 1 ? 'es' : ''}!` : "Item posted! We'll notify you if we find matches.";
 
   ["title", "description", "location", "phone"].forEach(id => $(id).value = "");
+  // Reset category pills
+  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+  $("category").value = "ID Card";
+
   await loadItems();
 };
 
@@ -131,26 +145,68 @@ async function loadItems() {
   const snapshot = await getDocs(query(collection(db, "items"), orderBy("createdAt", "desc")));
   const user = auth.currentUser;
 
+  if (snapshot.empty) {
+    itemsDiv.innerHTML = '<div class="items-empty"><span class="icon">📭</span>No items posted yet.<br>Be the first to report one!</div>';
+    if (typeof filterItems === 'function') filterItems();
+    return;
+  }
+
+  let delay = 0;
   for (const docSnap of snapshot.docs) {
     const item = docSnap.data(), id = docSnap.id;
     if (item.expiresAt && Date.now() > item.expiresAt) { await deleteDoc(doc(db, "items", id)); continue; }
 
+    const initials = item.email ? item.email.slice(0, 2).toUpperCase() : '??';
+    const timeStr = item.createdAt?.toDate ? timeAgo(item.createdAt.toDate()) : 'Just now';
+
     const div = document.createElement("div");
-    div.className = "p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20";
+    div.className = "item-card";
+    div.dataset.type = item.type;
+    div.style.animationDelay = delay + 'ms';
     div.innerHTML = `
-      <h3 class="text-xl font-semibold text-cyan-400">${item.title} <span class="text-sm text-gray-400">(${item.type})</span></h3>
-      <p class="text-gray-300 mt-1">${item.description}</p>
-      <p class="text-gray-400 mt-2">📍 ${item.location}</p>
-      <div class="mt-4 flex flex-wrap gap-3">
-        <a href="tel:${item.phone}" class="px-5 py-2 rounded-xl font-medium bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30 transition">📞 Contact</a>
-        ${user && (user.uid === item.uid || isAdmin(user)) ? `<button onclick="openResolveModal('${id}')" class="px-5 py-2 rounded-xl font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 transition">✅ Mark as Resolved</button>` : ''}
+      <div class="card-header">
+        <div class="avatar-sm">${initials}</div>
+        <div class="card-meta">
+          <div class="tag-row">
+            <span class="type-tag ${item.type}">${item.type === 'lost' ? '✕' : '✓'} ${item.type}</span>
+            <span class="card-time">${timeStr}</span>
+          </div>
+          <div class="card-title">${escHtml(item.title)}</div>
+        </div>
+      </div>
+      <p class="card-body">${escHtml(item.description)}</p>
+      <div class="card-footer">
+        <div class="card-location"><span>📍</span><span>${escHtml(item.location)}</span></div>
+        <div class="card-actions">
+          <a href="tel:${escHtml(item.phone)}" class="btn-contact">Contact</a>
+          ${user && (user.uid === item.uid || isAdmin(user)) ? `<button onclick="openResolveModal('${id}')" class="btn-resolve">Resolve</button>` : ''}
+        </div>
       </div>`;
     itemsDiv.appendChild(div);
+    delay += 60;
   }
+
+  // Trigger filter
+  if (typeof filterItems === 'function') filterItems();
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeAgo(date) {
+  const secs = Math.floor((Date.now() - date) / 1000);
+  if (secs < 60) return 'Just now';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  return days === 1 ? 'Yesterday' : days + 'd ago';
 }
 
 // Resolve Modal
-window.openResolveModal = id => { resolveItemId = id; $("resolveModal").classList.remove("hidden"); $("resolveModal").classList.add("flex"); };
+window.openResolveModal = id => { resolveItemId = id; $("resolveModal").classList.remove("hidden"); };
 window.closeResolveModal = () => { resolveItemId = null; $("resolveModal").classList.add("hidden"); };
 $("confirmResolveBtn").onclick = async () => { if (!resolveItemId) return; await deleteDoc(doc(db, "items", resolveItemId)); closeResolveModal(); loadItems(); };
 
@@ -165,31 +221,45 @@ function renderNotifications(notifications) {
   const badge = $("notifBadge"), list = $("notifList");
   const unread = notifications.filter(n => !n.read).length;
 
-  badge.textContent = unread > 9 ? "9+" : unread;
-  badge.classList.toggle("hidden", unread === 0);
+  badge.classList.toggle("visible", unread > 0);
 
-  if (notifications.length === 0) return list.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No notifications yet</p>';
+  if (notifications.length === 0) {
+    list.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+    return;
+  }
 
   list.innerHTML = notifications.map(n => `
-    <div class="p-3 rounded-xl mb-2 cursor-pointer transition ${n.read ? 'bg-white/5' : 'bg-purple-500/20 border border-purple-500/30'} hover:bg-white/10" onclick="openMatchDetails('${n.id}', '${n.lostItemId}', '${n.foundItemId}', ${n.matchScore})">
-      <div class="flex items-start gap-3">
-        <span class="text-2xl">${n.read ? '📋' : '🎉'}</span>
-        <div class="flex-1 min-w-0">
-          <p class="font-medium text-sm ${n.read ? 'text-gray-400' : 'text-white'}">${n.title}</p>
-          <p class="text-xs text-gray-500 mt-1 truncate">${n.message}</p>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 mt-2 inline-block">${n.matchScore}% match</span>
-        </div>
+    <div class="notif-item ${n.read ? 'read' : 'unread'}" onclick="openMatchDetails('${n.id}', '${n.lostItemId}', '${n.foundItemId}', ${n.matchScore})">
+      <span class="icon">${n.read ? '📋' : '🎉'}</span>
+      <div class="content">
+        <div class="title">${escHtml(n.title)}</div>
+        <div class="msg">${escHtml(n.message)}</div>
+        <span class="score-badge">${n.matchScore}% match</span>
       </div>
     </div>`).join('');
 }
 
-window.toggleNotifications = () => $("notifDropdown").classList.toggle("hidden");
-document.addEventListener("click", e => { if (!$("notifDropdown").contains(e.target) && !$("notifBellBtn").contains(e.target)) $("notifDropdown").classList.add("hidden"); });
+// Use .open class for notification dropdown (defined in HTML script, override here)
+window.toggleNotifications = () => {
+  const dd = $("notifDropdown");
+  const btn = $("notifBellBtn");
+  dd.classList.toggle("open");
+  btn.classList.toggle("active", dd.classList.contains("open"));
+};
+
+document.addEventListener("click", e => {
+  const dd = $("notifDropdown"), btn = $("notifBellBtn");
+  if (dd && btn && !dd.contains(e.target) && !btn.contains(e.target)) {
+    dd.classList.remove("open");
+    btn.classList.remove("active");
+  }
+});
 
 // Match Details Modal
 window.openMatchDetails = async (notifId, lostItemId, foundItemId, matchScore) => {
   await updateDoc(doc(db, "notifications", notifId), { read: true });
-  $("notifDropdown").classList.add("hidden");
+  $("notifDropdown").classList.remove("open");
+  $("notifBellBtn").classList.remove("active");
 
   const [lostDoc, foundDoc] = await Promise.all([getDoc(doc(db, "items", lostItemId)), getDoc(doc(db, "items", foundItemId))]);
   const lostItem = lostDoc.exists() ? { id: lostDoc.id, ...lostDoc.data() } : null;
@@ -198,23 +268,38 @@ window.openMatchDetails = async (notifId, lostItemId, foundItemId, matchScore) =
   if (!lostItem || !foundItem) return alert("One or both items no longer exist.");
   currentMatchData = { lostItem, foundItem, matchScore };
 
+  // Build match confidence tags
+  const tags = [];
+  if (lostItem.category === foundItem.category) tags.push('Same category');
+  if (normalizeLocation(lostItem.location) && normalizeLocation(foundItem.location) &&
+      (normalizeLocation(lostItem.location).includes(normalizeLocation(foundItem.location)) ||
+       normalizeLocation(foundItem.location).includes(normalizeLocation(lostItem.location)))) tags.push('Similar location');
+  if (tags.length < 3) tags.push('Keyword match');
+
   $("matchContent").innerHTML = `
-    <div class="bg-white/5 p-4 rounded-xl">
-      <div class="flex items-center gap-2 mb-2"><span class="text-red-400">📍 LOST</span><span class="flex-1 text-sm text-gray-400">Your item</span></div>
-      <h4 class="font-semibold text-white">${lostItem.title}</h4>
-      <p class="text-sm text-gray-400 mt-1">${lostItem.description}</p>
-      <p class="text-sm text-gray-500 mt-1">📍 ${lostItem.location}</p>
+    <div class="match-score-hero">
+      <div class="score-num">${matchScore}%</div>
+      <div class="score-label">match confidence</div>
+      <div class="match-tags">${tags.map(t => `<span class="match-tag">${t}</span>`).join('')}</div>
     </div>
-    <div class="flex justify-center"><span class="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-bold">${matchScore}% Match</span></div>
-    <div class="bg-white/5 p-4 rounded-xl">
-      <div class="flex items-center gap-2 mb-2"><span class="text-green-400">✅ FOUND</span><span class="flex-1 text-sm text-gray-400">Potential match</span></div>
-      <h4 class="font-semibold text-white">${foundItem.title}</h4>
-      <p class="text-sm text-gray-400 mt-1">${foundItem.description}</p>
-      <p class="text-sm text-gray-500 mt-1">📍 ${foundItem.location}</p>
+
+    <div class="match-item-label lost">Your lost item</div>
+    <div class="match-item-card lost-card">
+      <div class="match-item-title">${escHtml(lostItem.title)}</div>
+      <div class="match-item-desc">${escHtml(lostItem.description)}</div>
+      <div class="match-item-loc">📍 ${escHtml(lostItem.location)}</div>
+    </div>
+
+    <div class="match-arrow">&#8596;</div>
+
+    <div class="match-item-label found">Potential match</div>
+    <div class="match-item-card found-card">
+      <div class="match-item-title">${escHtml(foundItem.title)}</div>
+      <div class="match-item-desc">${escHtml(foundItem.description)}</div>
+      <div class="match-item-loc">📍 ${escHtml(foundItem.location)}</div>
     </div>`;
 
   $("matchModal").classList.remove("hidden");
-  $("matchModal").classList.add("flex");
 };
 
 window.closeMatchModal = () => { $("matchModal").classList.add("hidden"); currentMatchData = null; };
