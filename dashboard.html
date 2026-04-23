@@ -1,191 +1,826 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <title>Student Hub – Lost & Found</title>
+  <title>lost &amp; found — Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- PWA -->
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#7c3aed">
-
-  <!-- iOS support -->
+  <meta name="theme-color" content="#f59e0b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icon-192.png">
 
-
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #f59e0b;
+      --accent-15: rgba(245,158,11,0.15);
+      --accent-20: rgba(245,158,11,0.20);
+      --accent-30: rgba(245,158,11,0.30);
+      --accent-40: rgba(245,158,11,0.40);
+      --bg: #0f0e0d;
+      --bg2: #161412;
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #f5f4f0;
+      --muted: rgba(245,244,240,0.45);
+      --lost-bg: rgba(239,68,68,0.12);
+      --lost-color: #f87171;
+      --lost-border: rgba(239,68,68,0.25);
+      --found-bg: rgba(134,239,172,0.12);
+      --found-color: #86efac;
+      --found-border: rgba(134,239,172,0.25);
     }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: #0d0c0b;
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 30% 20%, rgba(245,158,11,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(134,239,172,0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── App shell ────────────────────────────────────────── */
+    .app {
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    @media (min-width: 520px) {
+      body { align-items: center; }
+      .app {
+        height: 92vh;
+        max-height: 860px;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+        overflow: hidden;
+      }
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .header {
+      padding: 16px 20px 0;
+      flex-shrink: 0;
+    }
+
+    .header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .wordmark-area .campus-label {
+      font-size: 10px; color: var(--muted);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .wordmark-area h1 {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 22px; color: var(--text); line-height: 1;
+    }
+
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* Bell */
+    #notifBellBtn {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; font-size: 16px;
+      transition: all 0.2s;
+    }
+    #notifBellBtn:hover { background: var(--accent-15); border-color: var(--accent-30); }
+    #notifBellBtn.active { background: var(--accent-15); border-color: var(--accent-40); }
+
+    #notifBadge {
+      position: absolute; top: 5px; right: 5px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); border: 1.5px solid var(--bg);
+      display: none;
+    }
+    #notifBadge.visible { display: block; }
+
+    /* Avatar */
+    .user-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-40), var(--accent-20));
+      border: 1px solid var(--accent-40);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* ── Notification dropdown ─────────────────────────────── */
+    #notifDropdown {
+      position: absolute; top: 68px; right: 20px; left: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      z-index: 100;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      max-height: 320px; overflow-y: auto;
+      display: none;
+    }
+    #notifDropdown.open { display: block; }
+
+    .notif-header {
+      padding: 12px 14px 8px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #notifList { padding: 8px; }
+
+    .notif-item {
+      padding: 10px 10px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .notif-item:last-child { margin-bottom: 0; }
+    .notif-item.unread {
+      background: var(--accent-15);
+      border: 1px solid var(--accent-30);
+    }
+    .notif-item.read { background: rgba(255,255,255,0.03); }
+    .notif-item:hover { background: rgba(255,255,255,0.07); }
+
+    .notif-item .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .notif-item .content { flex: 1; min-width: 0; }
+    .notif-item .title { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .notif-item .msg { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .notif-item .score-badge {
+      display: inline-block; margin-top: 5px;
+      padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      background: var(--accent-20); color: var(--accent);
+    }
+
+    .notif-empty { padding: 20px; text-align: center; font-size: 12px; color: var(--muted); }
+
+    /* ── Filter pills ──────────────────────────────────────── */
+    .filter-row {
+      display: flex; gap: 6px; align-items: center;
+      margin-bottom: 12px;
+      overflow-x: auto; padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+
+    .filter-btn {
+      padding: 6px 16px; border-radius: 99px; font-size: 12px; font-weight: 500;
+      flex-shrink: 0; cursor: pointer; transition: all 0.2s;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: capitalize;
+    }
+    .filter-btn.inactive {
+      background: var(--card); color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .filter-btn.active {
+      background: var(--accent); color: #0f0e0d;
+      border: 1px solid var(--accent);
+      font-weight: 600;
+    }
+    .filter-spacer { flex: 1; }
+    .item-count { font-size: 11px; color: var(--muted); flex-shrink: 0; white-space: nowrap; }
+
+    /* ── Feed ──────────────────────────────────────────────── */
+    .feed {
+      flex: 1; overflow-y: auto; padding: 0 20px 10px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(245,158,11,0.2) transparent;
+    }
+    .feed::-webkit-scrollbar { width: 3px; }
+    .feed::-webkit-scrollbar-track { background: transparent; }
+    .feed::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.2); border-radius: 3px; }
+
+    /* Item cards */
+    .item-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.35s cubic-bezier(0.34,1.26,0.64,1) both;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .item-card .match-badge {
+      position: absolute; top: 12px; right: 12px;
+      padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      background: var(--accent-20); color: var(--accent);
+      border: 1px solid var(--accent-40);
+    }
+
+    .item-card .card-header {
+      display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px;
+    }
+
+    .avatar-sm {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent-40), var(--accent-20));
+      border: 1px solid var(--accent-40);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; color: var(--accent);
+    }
+
+    .card-meta { flex: 1; min-width: 0; }
+    .card-meta .tag-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+
+    .type-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; border-radius: 99px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .type-tag.lost {
+      background: var(--lost-bg); color: var(--lost-color);
+      border: 1px solid var(--lost-border);
+    }
+    .type-tag.found {
+      background: var(--found-bg); color: var(--found-color);
+      border: 1px solid var(--found-border);
+    }
+
+    .card-time { font-size: 10px; color: var(--muted); }
+    .card-title { font-weight: 600; font-size: 15px; color: var(--text); line-height: 1.3; }
+
+    .card-body {
+      font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 8px;
+    }
+
+    .card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-location {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11px; color: var(--muted);
+    }
+
+    .card-actions { display: flex; gap: 6px; }
+
+    .btn-contact, .btn-resolve {
+      padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 600;
+      border: none; cursor: pointer; transition: all 0.2s;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .btn-contact {
+      background: var(--accent-15); color: var(--accent);
+      border: 1px solid var(--accent-30);
+      text-decoration: none;
+    }
+    .btn-contact:hover { background: var(--accent-30); }
+    .btn-resolve {
+      background: rgba(239,68,68,0.08); color: #f87171;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .btn-resolve:hover { background: rgba(239,68,68,0.16); }
+
+    .items-empty {
+      text-align: center; padding: 48px 20px;
+      font-size: 13px; color: var(--muted); line-height: 1.8;
+    }
+    .items-empty .icon { font-size: 32px; display: block; margin-bottom: 12px; }
+
+    /* ── Post FAB ─────────────────────────────────────────── */
+    .fab-area {
+      padding: 0 20px 28px; flex-shrink: 0;
+    }
+
+    .fab-btn {
+      width: 100%; padding: 15px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), #d97706);
+      color: #0f0e0d; border: none; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 15px;
+      box-shadow: 0 4px 24px rgba(245,158,11,0.4);
+      transition: all 0.2s;
+    }
+    .fab-btn:hover {
+      box-shadow: 0 6px 32px rgba(245,158,11,0.6);
+      transform: translateY(-1px);
+    }
+    .fab-btn:active { transform: translateY(0); }
+
+    /* ── Post Item Panel (slide-up) ───────────────────────── */
+    .panel-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .panel-overlay.open { display: flex; }
+
+    .panel {
+      width: 100%; max-width: 480px;
+      background: var(--bg);
+      border-radius: 24px 24px 0 0;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      max-height: 92vh;
+      display: flex; flex-direction: column;
+      animation: slidePanel 0.3s cubic-bezier(0.34,1.2,0.64,1);
+    }
+    @keyframes slidePanel {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .panel-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--border);
+      margin: 10px auto 0;
+      flex-shrink: 0;
+    }
+
+    .panel-header {
+      padding: 14px 20px 0; flex-shrink: 0;
+    }
+
+    .panel-header-row {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+    }
+
+    .btn-back {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      cursor: pointer; color: var(--text); font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.08); }
+
+    .panel-title { font-size: 17px; font-weight: 600; color: var(--text); }
+
+    /* Lost/found toggle */
+    .type-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 3px;
+      margin-bottom: 18px;
+    }
+
+    .toggle-btn {
+      flex: 1; padding: 9px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      border: 1px solid transparent;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: capitalize; background: transparent;
+    }
+    .toggle-btn.lost-active {
+      background: rgba(239,68,68,0.15); color: #f87171;
+      border-color: rgba(239,68,68,0.35);
+    }
+    .toggle-btn.found-active {
+      background: rgba(134,239,172,0.12); color: #86efac;
+      border-color: rgba(134,239,172,0.3);
+    }
+    .toggle-btn.inactive { color: var(--muted); }
+
+    .panel-body {
+      flex: 1; overflow-y: auto; padding: 0 20px;
+      scrollbar-width: none;
+    }
+    .panel-body::-webkit-scrollbar { display: none; }
+
+    .field-group { margin-bottom: 14px; }
+    .field-label {
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      display: block; margin-bottom: 6px;
+    }
+
+    /* Category pills */
+    .cat-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cat-pill {
+      padding: 6px 12px; border-radius: 99px; font-size: 12px;
+      cursor: pointer; transition: all 0.2s;
+      font-family: 'Space Grotesk', sans-serif;
+      border: 1px solid var(--border);
+      background: var(--card); color: var(--muted);
+    }
+    .cat-pill.active {
+      background: var(--accent-20); color: var(--accent);
+      border-color: rgba(245,158,11,0.5);
+    }
+
+    .field-input, .field-textarea, .field-select {
+      width: 100%; padding: 12px 14px; border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text); font-size: 13px;
+      font-family: 'Space Grotesk', sans-serif;
+      outline: none; transition: border-color 0.2s;
+    }
+    .field-input::placeholder, .field-textarea::placeholder { color: var(--muted); }
+    .field-input:focus, .field-textarea:focus, .field-select:focus {
+      border-color: rgba(245,158,11,0.6);
+    }
+    .field-textarea { resize: none; line-height: 1.5; }
+    .field-select option { background: var(--bg2); }
+
+    .panel-footer { padding: 12px 20px 28px; flex-shrink: 0; }
+
+    .btn-post {
+      width: 100%; padding: 15px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), #d97706);
+      color: #0f0e0d; border: none; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 15px;
+      box-shadow: 0 4px 24px rgba(245,158,11,0.4);
+      transition: all 0.2s;
+    }
+    .btn-post:hover { box-shadow: 0 6px 32px rgba(245,158,11,0.6); }
+
+    #msg {
+      font-size: 12px; color: #86efac;
+      text-align: center; margin-top: 10px;
+      min-height: 18px;
+    }
+
+    /* Post submitting state */
+    .post-loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 16px; padding: 48px 32px;
+    }
+    .post-loading .step-icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--accent-15); border: 2px solid var(--accent-40);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .post-loading .step-title { font-size: 16px; font-weight: 600; color: var(--text); }
+    .post-loading .step-sub { font-size: 12px; color: var(--muted); }
+    .dots { display: flex; gap: 6px; }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      animation: bounce 0.8s ease-in-out infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.15s; }
+    .dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── Modals ────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    /* Resolve modal */
+    #resolveModal {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.7);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    #resolveModal.hidden { display: none; }
+    #resolveModal:not(.hidden) { display: flex; }
+
+    .resolve-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 24px;
+      width: 100%; max-width: 320px;
+    }
+    .resolve-box h3 { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .resolve-box p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .resolve-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    .btn-cancel {
+      padding: 10px 18px; border-radius: 10px;
+      background: var(--card); color: var(--text);
+      border: 1px solid var(--border); cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,0.08); }
+
+    #confirmResolveBtn {
+      padding: 10px 20px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #d97706);
+      color: #0f0e0d; border: none; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px;
+      transition: all 0.2s;
+    }
+    #confirmResolveBtn:hover { box-shadow: 0 4px 16px rgba(245,158,11,0.4); }
+
+    /* Match modal */
+    #matchModal {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.7);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    #matchModal.hidden { display: none; }
+    #matchModal:not(.hidden) { display: flex; }
+
+    .match-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%; max-width: 400px;
+      max-height: 88vh; overflow-y: auto;
+    }
+
+    .match-box-header {
+      padding: 20px 20px 0;
+    }
+
+    .match-box-header h3 {
+      font-size: 17px; font-weight: 600; color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    #matchContent { padding: 0 20px; }
+
+    .match-score-hero {
+      background: linear-gradient(135deg, var(--accent-15), rgba(245,158,11,0.05));
+      border: 1px solid var(--accent-30);
+      border-radius: 16px; padding: 20px;
+      margin-bottom: 14px; text-align: center;
+    }
+    .match-score-hero .score-num {
+      font-size: 48px; font-weight: 700; color: var(--accent);
+      font-family: 'Instrument Serif', serif; line-height: 1;
+    }
+    .match-score-hero .score-label {
+      font-size: 13px; color: var(--muted); margin-top: 4px;
+    }
+    .match-tags { display: flex; justify-content: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .match-tag {
+      padding: 3px 10px; border-radius: 99px; font-size: 10px; font-weight: 600;
+      background: var(--accent-15); color: var(--accent);
+      border: 1px solid var(--accent-30);
+    }
+
+    .match-item-card {
+      border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+    }
+    .match-item-card.lost-card {
+      background: var(--card); border: 1px solid rgba(239,68,68,0.2);
+    }
+    .match-item-card.found-card {
+      background: var(--card); border: 1px solid rgba(134,239,172,0.2);
+    }
+    .match-item-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .match-item-label.lost { color: var(--lost-color); }
+    .match-item-label.found { color: var(--found-color); }
+    .match-item-title { font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+    .match-item-desc { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .match-item-loc { font-size: 11px; color: var(--muted); }
+
+    .match-arrow { text-align: center; font-size: 18px; margin: 6px 0; color: var(--muted); }
+
+    .match-actions {
+      display: flex; justify-content: flex-end; gap: 10px;
+      padding: 16px 20px 20px;
+    }
+
+    .btn-view-contact {
+      padding: 12px 20px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #d97706);
+      color: #0f0e0d; border: none; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px;
+      box-shadow: 0 4px 16px rgba(245,158,11,0.4);
+      transition: all 0.2s;
+    }
+    .btn-view-contact:hover { box-shadow: 0 6px 24px rgba(245,158,11,0.6); }
+
+    /* Logout link */
+    .logout-btn {
+      background: none; border: none; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; color: var(--muted);
+      padding: 6px 10px; border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .logout-btn:hover { color: #f87171; background: rgba(239,68,68,0.08); }
   </style>
 </head>
 
-<body class="bg-black text-white p-4 min-h-screen">
+<body>
+  <div class="app">
 
-  <!-- HEADER -->
-  <div class="max-w-4xl mx-auto flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold bg-clip-text text-transparent
-               bg-gradient-to-r from-purple-400 to-cyan-400">
-      Student Hub – Lost & Found
-    </h1>
+    <!-- ── Header ─────────────────────────────────────────── -->
+    <div class="header">
+      <div class="header-row">
+        <div class="wordmark-area">
+          <div class="campus-label">Thapar University</div>
+          <h1>lost &amp; found</h1>
+        </div>
+        <div class="header-actions">
+          <!-- Notification Bell -->
+          <div style="position:relative">
+            <button id="notifBellBtn" onclick="toggleNotifications()" title="Notifications">
+              🔔
+              <div id="notifBadge"></div>
+            </button>
 
-    <div class="flex items-center gap-4">
-      <!-- NOTIFICATION BELL -->
-      <div class="relative">
-        <button onclick="toggleNotifications()" id="notifBellBtn" class="p-2 rounded-xl bg-purple-500/20 text-purple-400 
-                 border border-purple-500/30 hover:bg-purple-500/30 
-                 transition relative">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          <!-- Notification Badge -->
-          <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white 
-                text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-            0
-          </span>
-        </button>
-
-        <!-- NOTIFICATION DROPDOWN -->
-        <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto
-             bg-[#1a1a1a] rounded-2xl border border-white/20 shadow-2xl z-50">
-          <div class="p-4 border-b border-white/10">
-            <h3 class="text-lg font-semibold text-purple-400">Notifications</h3>
+            <!-- Notification Dropdown -->
+            <div id="notifDropdown">
+              <div class="notif-header">Notifications</div>
+              <div id="notifList">
+                <div class="notif-empty">No notifications yet</div>
+              </div>
+            </div>
           </div>
-          <div id="notifList" class="p-2">
-            <p class="text-gray-500 text-sm text-center py-4">No notifications yet</p>
+
+          <div class="user-avatar" id="userAvatar" title="Logout" onclick="logout()">?</div>
+        </div>
+      </div>
+
+      <!-- Filter pills -->
+      <div class="filter-row" id="filterRow">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All</button>
+        <button class="filter-btn inactive" data-filter="lost" onclick="setFilter(this)">Lost</button>
+        <button class="filter-btn inactive" data-filter="found" onclick="setFilter(this)">Found</button>
+        <div class="filter-spacer"></div>
+        <div class="item-count" id="itemCount">— items</div>
+      </div>
+    </div>
+
+    <!-- ── Feed ───────────────────────────────────────────── -->
+    <div class="feed" id="items">
+      <div class="items-empty">
+        <span class="icon">🔍</span>
+        Loading items…
+      </div>
+    </div>
+
+    <!-- ── FAB ────────────────────────────────────────────── -->
+    <div class="fab-area">
+      <button class="fab-btn" onclick="openPostPanel()">+ Post an Item</button>
+    </div>
+
+  </div><!-- /.app -->
+
+  <!-- ── Post Item Panel ─────────────────────────────────── -->
+  <div class="panel-overlay" id="postPanel" onclick="handlePanelOverlayClick(event)">
+    <div class="panel">
+      <div class="panel-handle"></div>
+
+      <!-- Form view -->
+      <div id="postFormView">
+        <div class="panel-header">
+          <div class="panel-header-row">
+            <button class="btn-back" onclick="closePostPanel()">←</button>
+            <span class="panel-title">Report Item</span>
+          </div>
+
+          <!-- Lost / Found toggle -->
+          <div class="type-toggle">
+            <button class="toggle-btn lost-active" id="toggleLost" onclick="setType('lost')">✕ Lost</button>
+            <button class="toggle-btn inactive" id="toggleFound" onclick="setType('found')">Found</button>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <!-- Category -->
+          <div class="field-group">
+            <label class="field-label">Category</label>
+            <div class="cat-pills">
+              <button class="cat-pill" onclick="setCategory(this)">ID Card</button>
+              <button class="cat-pill" onclick="setCategory(this)">Wallet</button>
+              <button class="cat-pill" onclick="setCategory(this)">Electronics</button>
+              <button class="cat-pill" onclick="setCategory(this)">Books</button>
+              <button class="cat-pill" onclick="setCategory(this)">Others</button>
+            </div>
+          </div>
+
+          <!-- Hidden selects for dashboard.js compatibility -->
+          <select id="type" style="display:none">
+            <option value="lost">Lost</option>
+            <option value="found">Found</option>
+          </select>
+          <select id="category" style="display:none">
+            <option>ID Card</option>
+            <option>Wallet</option>
+            <option>Electronics</option>
+            <option>Books</option>
+            <option>Others</option>
+          </select>
+
+          <div class="field-group">
+            <label class="field-label" for="title">Item title</label>
+            <input class="field-input" id="title" placeholder="e.g. Blue wallet, OnePlus earbuds" />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="description">Description</label>
+            <textarea class="field-textarea" id="description" rows="3" placeholder="Any details that help identify it…"></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="location">Last seen / found at</label>
+            <input class="field-input" id="location" placeholder="e.g. Block C Cafeteria" />
+          </div>
+
+          <div class="field-group" style="margin-bottom:24px">
+            <label class="field-label" for="phone">Contact number</label>
+            <input class="field-input" id="phone" placeholder="10-digit mobile number" maxlength="10" />
+          </div>
+        </div>
+
+        <div class="panel-footer">
+          <button class="btn-post" onclick="postItem()">Post &amp; Find Matches →</button>
+          <p id="msg"></p>
+        </div>
+      </div>
+
+      <!-- Loading view (shown while posting) -->
+      <div id="postLoadingView" style="display:none">
+        <div class="post-loading" id="postLoadingContent">
+          <div class="step-icon" id="postStepIcon">📤</div>
+          <div>
+            <div class="step-title" id="postStepTitle">Posting your item…</div>
+            <div class="step-sub" id="postStepSub"></div>
           </div>
         </div>
       </div>
 
-      <button onclick="logout()" class="px-5 py-2 rounded-xl
-               bg-red-500/20 text-red-400 border border-red-500/30
-               hover:bg-red-500/30 transition">
-        Logout
-      </button>
     </div>
   </div>
 
-  <!-- POST ITEM -->
-  <div class="max-w-4xl mx-auto bg-white/10 p-6 rounded-2xl mb-8
-              backdrop-blur-xl border border-white/20">
-
-    <h2 class="text-xl font-semibold mb-4 text-cyan-400">Post Item</h2>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-      <select id="type" class="px-4 py-2 rounded-xl bg-black/40 border border-white/20">
-        <option value="lost">Lost</option>
-        <option value="found">Found</option>
-      </select>
-
-      <select id="category" class="px-4 py-2 rounded-xl bg-black/40 border border-white/20">
-        <option>ID Card</option>
-        <option>Wallet</option>
-        <option>Electronics</option>
-        <option>Books</option>
-        <option>Others</option>
-      </select>
-
-      <input id="title" placeholder="Item title"
-        class="md:col-span-2 px-4 py-2 rounded-xl bg-black/40 border border-white/20" />
-
-      <textarea id="description" placeholder="Description" rows="3"
-        class="md:col-span-2 px-4 py-2 rounded-xl bg-black/40 border border-white/20"></textarea>
-
-      <input id="location" placeholder="Location"
-        class="md:col-span-2 px-4 py-2 rounded-xl bg-black/40 border border-white/20" />
-
-      <input id="phone" placeholder="Mobile number (10 digits)" maxlength="10"
-        class="md:col-span-2 px-4 py-2 rounded-xl bg-black/40 border border-white/20" />
-    </div>
-
-    <button onclick="postItem()" class="mt-6 w-full py-3 rounded-xl font-semibold
-             bg-gradient-to-r from-purple-600 to-cyan-500
-             hover:opacity-90 transition">
-      Post Item
-    </button>
-
-    <p id="msg" class="text-sm text-red-400 mt-3"></p>
-  </div>
-
-  <!-- ITEMS -->
-  <div class="max-w-4xl mx-auto">
-    <h2 class="text-2xl font-semibold mb-4 text-purple-400">All Items</h2>
-    <div id="items" class="space-y-5"></div>
-  </div>
-
-  <!-- RESOLVE MODAL -->
-  <div id="resolveModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
-
-    <div class="bg-[#0b0b0b] p-6 rounded-2xl w-80
-                border border-white/20 shadow-2xl">
-
-      <h3 class="text-lg font-semibold mb-3 text-purple-400">
-        Mark as Resolved?
-      </h3>
-
-      <p class="text-sm text-gray-400 mb-5">
-        This will permanently remove the item.
-      </p>
-
-      <div class="flex justify-end gap-3">
-        <button onclick="closeResolveModal()" class="px-4 py-2 rounded-xl
-                 bg-white/10 border border-white/20
-                 hover:bg-white/20 transition">
-          Cancel
-        </button>
-
-        <button id="confirmResolveBtn" class="px-5 py-2 rounded-xl font-semibold
-                 bg-gradient-to-r from-purple-600 to-cyan-500
-                 shadow-[0_0_20px_rgba(168,85,247,0.6)]
-                 hover:shadow-[0_0_35px_rgba(34,211,238,0.9)]
-                 hover:-translate-y-0.5 active:scale-95
-                 transition-all">
-          ✅ OK
-        </button>
+  <!-- ── Resolve Modal ───────────────────────────────────── -->
+  <div id="resolveModal" class="hidden">
+    <div class="resolve-box">
+      <h3>Mark as Resolved?</h3>
+      <p>This will permanently remove the item from the board.</p>
+      <div class="resolve-actions">
+        <button class="btn-cancel" onclick="closeResolveModal()">Cancel</button>
+        <button id="confirmResolveBtn">Resolved ✓</button>
       </div>
     </div>
   </div>
 
-  <!-- MATCH DETAILS MODAL -->
-  <div id="matchModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-
-    <div class="bg-[#0b0b0b] p-6 rounded-2xl w-full max-w-md
-                border border-white/20 shadow-2xl">
-
-      <h3 class="text-xl font-semibold mb-4 text-cyan-400">
-        🎉 Potential Match Found!
-      </h3>
-
-      <div id="matchContent" class="space-y-4">
-        <!-- Dynamic content will be inserted here -->
+  <!-- ── Match Modal ──────────────────────────────────────── -->
+  <div id="matchModal" class="hidden">
+    <div class="match-box">
+      <div class="match-box-header">
+        <h3>Match Found</h3>
       </div>
 
-      <div class="flex justify-end gap-3 mt-6">
-        <button onclick="closeMatchModal()" class="px-4 py-2 rounded-xl
-                 bg-white/10 border border-white/20
-                 hover:bg-white/20 transition">
-          Close
-        </button>
+      <div id="matchContent"></div>
 
-        <button onclick="viewMatchedItem()" class="px-5 py-2 rounded-xl font-semibold
-                 bg-gradient-to-r from-purple-600 to-cyan-500
-                 shadow-[0_0_20px_rgba(168,85,247,0.6)]
-                 hover:shadow-[0_0_35px_rgba(34,211,238,0.9)]
-                 hover:-translate-y-0.5 active:scale-95
-                 transition-all">
-          📞 View Contact
-        </button>
+      <div class="match-actions">
+        <button class="btn-cancel" onclick="closeMatchModal()">Close</button>
+        <button class="btn-view-contact" onclick="viewMatchedItem()">📞 View Contact</button>
       </div>
     </div>
   </div>
@@ -193,21 +828,136 @@
   <script type="module" src="dashboard.js"></script>
 
   <script>
+    // ── UI helpers for new design ──────────────────────────
+
+    let currentFilter = 'all';
+    let allItemEls = []; // [{el, type}]
+
+    function setFilter(btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.toggle('active', b === btn);
+        b.classList.toggle('inactive', b !== btn);
+      });
+      currentFilter = btn.dataset.filter;
+      filterItems();
+    }
+
+    function filterItems() {
+      const feed = document.getElementById('items');
+      const cards = feed.querySelectorAll('.item-card');
+      let visible = 0;
+      cards.forEach(card => {
+        const t = card.dataset.type;
+        const show = currentFilter === 'all' || t === currentFilter;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      document.getElementById('itemCount').textContent = visible + ' item' + (visible !== 1 ? 's' : '');
+    }
+
+    // Post panel
+    function openPostPanel() {
+      document.getElementById('postPanel').classList.add('open');
+      document.getElementById('postFormView').style.display = '';
+      document.getElementById('postLoadingView').style.display = 'none';
+      document.getElementById('msg').textContent = '';
+    }
+    function closePostPanel() {
+      document.getElementById('postPanel').classList.remove('open');
+    }
+    function handlePanelOverlayClick(e) {
+      if (e.target === document.getElementById('postPanel')) closePostPanel();
+    }
+    window.closePostPanel = closePostPanel;
+
+    // Lost/found type toggle UI
+    let _currentType = 'lost';
+    function setType(t) {
+      _currentType = t;
+      const tl = document.getElementById('toggleLost');
+      const tf = document.getElementById('toggleFound');
+      tl.className = 'toggle-btn ' + (t === 'lost' ? 'lost-active' : 'inactive');
+      tl.textContent = t === 'lost' ? '✕ Lost' : 'Lost';
+      tf.className = 'toggle-btn ' + (t === 'found' ? 'found-active' : 'inactive');
+      tf.textContent = t === 'found' ? '✓ Found' : 'Found';
+      // sync hidden select
+      document.getElementById('type').value = t;
+    }
+    window.setType = setType;
+
+    // Category pill UI
+    function setCategory(btn) {
+      document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('category').value = btn.textContent;
+    }
+    window.setCategory = setCategory;
+
+    // Override postItem to show loading state
+    const _origPostItem = window.postItem;
+    window.postItem = async function() {
+      const form = document.getElementById('postFormView');
+      const loading = document.getElementById('postLoadingView');
+      form.style.display = 'none';
+      loading.style.display = '';
+      document.getElementById('postStepTitle').textContent = 'Posting your item…';
+      document.getElementById('postStepIcon').textContent = '📤';
+      document.getElementById('postStepSub').textContent = '';
+
+      setTimeout(() => {
+        document.getElementById('postStepTitle').textContent = 'Searching for matches…';
+        document.getElementById('postStepIcon').textContent = '🔍';
+        document.getElementById('postStepSub').textContent = 'Scanning campus reports';
+        const dotArea = document.getElementById('postLoadingContent');
+        if (!dotArea.querySelector('.dots')) {
+          const d = document.createElement('div');
+          d.className = 'dots';
+          d.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+          dotArea.appendChild(d);
+        }
+      }, 900);
+
+      if (_origPostItem) {
+        await _origPostItem();
+      }
+
+      setTimeout(() => closePostPanel(), 400);
+    };
+
+    // Update item count after items load
+    const origLoadItems = window.loadItems;
+
+    // User avatar initials from auth
+    function setUserInitials(name) {
+      if (!name) return;
+      const parts = name.trim().split(/\s+/);
+      const initials = parts.length >= 2
+        ? parts[0][0] + parts[parts.length-1][0]
+        : parts[0].slice(0, 2);
+      document.getElementById('userAvatar').textContent = initials.toUpperCase();
+    }
+    window.setUserInitials = setUserInitials;
+
+    // Notification bell active state
+    window.toggleNotifications = function() {
+      const dd = document.getElementById('notifDropdown');
+      const btn = document.getElementById('notifBellBtn');
+      dd.classList.toggle('open');
+      btn.classList.toggle('active', dd.classList.contains('open'));
+    };
+
+    document.addEventListener('click', e => {
+      const dd = document.getElementById('notifDropdown');
+      const btn = document.getElementById('notifBellBtn');
+      if (!dd.contains(e.target) && !btn.contains(e.target)) {
+        dd.classList.remove('open');
+        btn.classList.remove('active');
+      }
+    });
+
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
     }
   </script>
-
 </body>
-
 </html>
-
-
-
-<!--
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js");
-}
-</script>
--->
