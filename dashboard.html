@@ -658,7 +658,7 @@
           <h1>lost &amp; found</h1>
         </div>
         <div class="header-actions">
-          <div class="user-avatar" id="userAvatar" title="Logout" onclick="if(confirm('Log out?')) logout()">?</div>
+          <div class="user-avatar" id="userAvatar" title="Logout" onclick="document.getElementById('logoutModal').classList.remove('hidden')">?</div>
         </div>
         <!-- Hidden notification state (bell removed; JS still needs these elements) -->
         <div style="display:none">
@@ -808,6 +808,18 @@
     </div><!-- /#postPanel -->
 
   </div><!-- /.app -->
+
+  <!-- ── Logout Confirm Modal ──────────────────────────────── -->
+  <div id="logoutModal" class="hidden">
+    <div class="resolve-box">
+      <h3>Log out?</h3>
+      <p>You'll need to sign in again with your @thapar.edu account.</p>
+      <div class="resolve-actions">
+        <button class="btn-cancel" onclick="document.getElementById('logoutModal').classList.add('hidden')">Cancel</button>
+        <button id="confirmLogoutBtn" style="padding:10px 20px;border-radius:10px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;transition:all 0.2s">Log out</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Resolve Modal ───────────────────────────────────── -->
   <div id="resolveModal" class="hidden">

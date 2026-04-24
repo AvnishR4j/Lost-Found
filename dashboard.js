@@ -354,3 +354,4 @@ window.openMatchDetails = async (notifId, lostItemId, foundItemId, matchScore) =
 window.closeMatchModal = () => { $("matchModal").classList.add("hidden"); currentMatchData = null; };
 window.viewMatchedItem = () => { if (currentMatchData?.foundItem?.phone) window.open(`tel:${currentMatchData.foundItem.phone}`, "_self"); closeMatchModal(); };
 window.logout = async () => { await signOut(auth); window.location.replace("index.html"); };
+$("confirmLogoutBtn").onclick = () => window.logout();
