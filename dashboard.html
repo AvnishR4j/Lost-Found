@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>lost &amp; found — Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
   <!-- PWA -->
   <link rel="manifest" href="./manifest.json">
@@ -38,13 +38,11 @@
       --found-border: rgba(134,239,172,0.25);
     }
 
-    html {
+    html, body {
       height: 100%;
       height: 100dvh;
-    }
-
-    html, body {
       overflow: hidden;
+      margin: 0; padding: 0;
     }
 
     body {
@@ -54,8 +52,9 @@
       display: flex;
       justify-content: center;
       align-items: stretch;
-      height: 100vh;
-      height: 100dvh;
+      position: fixed;
+      width: 100%;
+      top: 0; left: 0; right: 0; bottom: 0;
     }
 
     body::before {
@@ -72,8 +71,7 @@
     .app {
       width: 100%;
       max-width: 480px;
-      height: 100vh;
-      height: 100dvh;
+      height: 100%;
       display: flex;
       flex-direction: column;
       background: var(--bg);
@@ -83,9 +81,8 @@
     }
 
     @media (min-width: 520px) {
-      body { align-items: center; }
+      body { align-items: center; position: static; height: 100dvh; }
       .app {
-        height: 92vh;
         height: 92dvh;
         max-height: 860px;
         border-radius: 28px;
@@ -312,7 +309,9 @@
 
     /* ── Post FAB ─────────────────────────────────────────── */
     .fab-area {
-      padding: 0 20px 28px; flex-shrink: 0;
+      padding: 0 20px 28px;
+      padding-bottom: max(28px, calc(16px + env(safe-area-inset-bottom)));
+      flex-shrink: 0;
     }
 
     .fab-btn {
@@ -438,7 +437,12 @@
     .field-textarea { resize: none; line-height: 1.5; }
     .field-select option { background: var(--bg2); }
 
-    .panel-footer { padding: 12px 20px 50px; flex-shrink: 0; min-height: 127.267px; }
+    .panel-footer {
+      padding: 12px 20px 50px;
+      padding-bottom: max(50px, calc(24px + env(safe-area-inset-bottom)));
+      flex-shrink: 0;
+      min-height: 127.267px;
+    }
 
     .btn-post {
       width: 100%; padding: 17px; border-radius: 99px;
