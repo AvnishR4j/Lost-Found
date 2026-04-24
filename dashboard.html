@@ -874,6 +874,7 @@
       document.getElementById('postLoadingView').style.display = 'none';
       document.getElementById('postMatchView').style.display = 'none';
       document.getElementById('msg').textContent = '';
+      history.pushState({ panel: 'post' }, '');
     }
     function closePostPanel() {
       document.getElementById('postPanel').classList.remove('open');
@@ -885,6 +886,13 @@
       }, 300);
     }
     window.closePostPanel = closePostPanel;
+
+    // Intercept Android back gesture / button to close panel instead of exiting
+    window.addEventListener('popstate', e => {
+      if (document.getElementById('postPanel').classList.contains('open')) {
+        closePostPanel();
+      }
+    });
 
     // Lost/found type toggle UI
     let _currentType = 'lost';
