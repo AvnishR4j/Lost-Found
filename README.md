@@ -20,7 +20,6 @@ A dedicated platform where students can post lost/found items, get instantly not
 
 - **@thapar.edu login only** — Google Auth restricted to campus accounts
 - **Post lost/found items** — title, description, category, location, photo
-- **AI match engine** — keyword + location + category scoring, notifies both parties on a match
 - **Real-time push notifications** — instant alerts for new matches
 - **PWA** — installable on Android & iOS directly from the browser, no app store needed
 - **Photo upload** — Cloudinary-backed image storage with client-side compression
@@ -44,7 +43,13 @@ A dedicated platform where students can post lost/found items, get instantly not
 
 ## Screenshots
 
-> Login screen · Dashboard feed · Post an item · AI match notification
+<p align="center">
+  <img src="screenshots/login.png" width="30%" alt="Login Screen" />
+  &nbsp;&nbsp;
+  <img src="screenshots/dashboard.png" width="30%" alt="Dashboard Feed" />
+  &nbsp;&nbsp;
+  <img src="screenshots/post-item.png" width="30%" alt="Post an Item" />
+</p>
 
 ---
 
