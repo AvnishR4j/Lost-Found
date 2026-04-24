@@ -746,9 +746,16 @@
 
           <div class="field-group" style="margin-bottom:24px">
             <label class="field-label">Photo (optional)</label>
-            <input id="photo" type="file" accept="image/*" class="field-input" style="padding:8px 14px;cursor:pointer" onchange="previewPhoto(this)" />
+            <input id="photo" type="file" accept="image/*" style="display:none" onchange="previewPhoto(this)" />
             <input id="photoCamera" type="file" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)" />
-            <button type="button" onclick="document.getElementById('photoCamera').click()" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);cursor:pointer;font-family:inherit;font-size:13px">📷 Take Photo with Camera</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+              <button type="button" onclick="document.getElementById('photo').click()" style="padding:12px 10px;border-radius:12px;background:rgba(255,255,255,0.06);color:rgba(245,244,240,0.75);border:1px solid rgba(255,255,255,0.12);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px">
+                <span style="font-size:16px">🖼️</span> Gallery
+              </button>
+              <button type="button" onclick="document.getElementById('photoCamera').click()" style="padding:12px 10px;border-radius:12px;background:rgba(245,158,11,0.08);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px">
+                <span style="font-size:16px">📷</span> Camera
+              </button>
+            </div>
             <img id="photoPreview" src="" alt="" style="display:none;margin-top:10px;max-height:180px;width:100%;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,0.1)" />
           </div>
         </div>
@@ -913,24 +920,30 @@
         await _origPostItem();
       }
 
-      // Show match/success view
+      // Show final step then auto-close back to dashboard
       const msgText = document.getElementById('msg').textContent || '';
       const hasMatch = msgText.includes('match');
-      loading.style.display = 'none';
-      const matchView = document.getElementById('postMatchView');
-      matchView.style.display = 'flex';
-      document.getElementById('matchViewTitle').textContent = hasMatch ? '🎯 Match Found!' : '✅ Posted!';
-      document.getElementById('matchViewContent').innerHTML = hasMatch
-        ? `<div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px">
-            <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:52px;font-weight:700;color:#f59e0b;line-height:1">🎯</div>
-            <div style="font-size:16px;font-weight:600;color:#f5f4f0;margin-top:12px">${msgText.replace('✅ ','')}</div>
-            <div style="font-size:12px;color:rgba(245,244,240,0.45);margin-top:6px">Check your notifications for details</div>
-          </div>`
-        : `<div style="background:rgba(134,239,172,0.10);border:1px solid rgba(134,239,172,0.25);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px">
-            <div style="font-size:52px;line-height:1">✅</div>
-            <div style="font-size:16px;font-weight:600;color:#f5f4f0;margin-top:12px">${msgText.replace('✅ ','')}</div>
-            <div style="font-size:12px;color:rgba(245,244,240,0.45);margin-top:6px">We'll notify you if we find a match</div>
-          </div>`;
+      document.getElementById('postStepIcon').textContent = hasMatch ? '🎯' : '✅';
+      document.getElementById('postStepTitle').textContent = hasMatch ? 'Match Found!' : 'Posted!';
+      document.getElementById('postStepSub').textContent = msgText.replace('✅ ', '');
+
+      setTimeout(() => {
+        closePostPanel();
+        // show toast on dashboard
+        const toast = document.createElement('div');
+        toast.textContent = hasMatch ? '🎯 Match found! Check notifications.' : '✅ Item posted successfully!';
+        Object.assign(toast.style, {
+          position:'fixed', bottom:'96px', left:'50%', transform:'translateX(-50%)',
+          background: hasMatch ? 'rgba(245,158,11,0.95)' : 'rgba(30,30,28,0.95)',
+          color: hasMatch ? '#0f0e0d' : '#f5f4f0',
+          border: hasMatch ? 'none' : '1px solid rgba(255,255,255,0.15)',
+          padding:'12px 20px', borderRadius:'99px', fontSize:'13px', fontWeight:'700',
+          fontFamily:'Space Grotesk,sans-serif', zIndex:'999', whiteSpace:'nowrap',
+          boxShadow:'0 4px 24px rgba(0,0,0,0.4)', transition:'opacity 0.4s'
+        });
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 2800);
+      }, 1400);
     };
 
     // Update item count after items load
