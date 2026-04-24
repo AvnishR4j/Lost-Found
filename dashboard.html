@@ -201,6 +201,19 @@
     .filter-spacer { flex: 1; }
     .item-count { font-size: 11px; color: var(--muted); flex-shrink: 0; white-space: nowrap; }
 
+    /* ── Pull to refresh ───────────────────────────────────── */
+    .ptr-indicator {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      height: 0; overflow: hidden; transition: height 0.2s;
+      color: var(--muted); font-size: 12px; font-weight: 600;
+    }
+    .ptr-indicator.visible { height: 44px; }
+    .ptr-spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(245,158,11,0.3); border-top-color: #f59e0b;
+      animation: spin 0.7s linear infinite;
+    }
+
     /* ── Feed ──────────────────────────────────────────────── */
     .feed {
       flex: 1; overflow-y: auto; padding: 0 20px 10px;
@@ -665,6 +678,7 @@
     </div>
 
     <!-- ── Feed ───────────────────────────────────────────── -->
+    <div class="ptr-indicator" id="ptrIndicator"><div class="ptr-spinner"></div>Refreshing…</div>
     <div class="feed" id="items">
       <div class="items-empty">
         <span class="icon">🔍</span>
@@ -974,6 +988,33 @@
       window.visualViewport.addEventListener('resize', setAppHeight);
       window.visualViewport.addEventListener('scroll', setAppHeight);
     }
+
+    // Pull-to-refresh on feed
+    (function() {
+      const feed = document.getElementById('items');
+      const ptr = document.getElementById('ptrIndicator');
+      let startY = 0, pulling = false, triggered = false;
+      const THRESHOLD = 72;
+
+      feed.addEventListener('touchstart', e => {
+        if (feed.scrollTop === 0) { startY = e.touches[0].clientY; pulling = true; triggered = false; }
+      }, { passive: true });
+
+      feed.addEventListener('touchmove', e => {
+        if (!pulling) return;
+        const dist = e.touches[0].clientY - startY;
+        if (dist > 10 && !triggered) ptr.classList.add('visible');
+        if (dist >= THRESHOLD && !triggered) triggered = true;
+      }, { passive: true });
+
+      feed.addEventListener('touchend', () => {
+        if (!pulling) return;
+        pulling = false;
+        ptr.classList.remove('visible');
+        if (triggered && window.loadItems) window.loadItems();
+        triggered = false;
+      });
+    })();
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
