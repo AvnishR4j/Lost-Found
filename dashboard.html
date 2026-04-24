@@ -38,8 +38,12 @@
       --found-border: rgba(134,239,172,0.25);
     }
 
-    html, body {
+    html {
       height: 100%;
+      height: 100dvh;
+    }
+
+    html, body {
       overflow: hidden;
     }
 
@@ -50,6 +54,8 @@
       display: flex;
       justify-content: center;
       align-items: stretch;
+      height: 100vh;
+      height: 100dvh;
     }
 
     body::before {
@@ -67,6 +73,7 @@
       width: 100%;
       max-width: 480px;
       height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       background: var(--bg);
@@ -79,6 +86,7 @@
       body { align-items: center; }
       .app {
         height: 92vh;
+        height: 92dvh;
         max-height: 860px;
         border-radius: 28px;
         border: 1px solid var(--border);
@@ -110,27 +118,6 @@
     }
 
     .header-actions { display: flex; gap: 8px; align-items: center; }
-
-    /* Bell */
-    #notifBellBtn {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      position: relative; font-size: 16px;
-      transition: all 0.2s;
-    }
-    #notifBellBtn:hover { background: var(--accent-15); border-color: var(--accent-30); }
-    #notifBellBtn.active { background: var(--accent-15); border-color: var(--accent-40); }
-
-    #notifBadge {
-      position: absolute; top: 5px; right: 5px;
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent); border: 1.5px solid var(--bg);
-      display: none;
-    }
-    #notifBadge.visible { display: block; }
 
     /* Avatar */
     .user-avatar {
@@ -652,23 +639,12 @@
           <h1>lost &amp; found</h1>
         </div>
         <div class="header-actions">
-          <!-- Notification Bell -->
-          <div style="position:relative">
-            <button id="notifBellBtn" onclick="toggleNotifications()" title="Notifications">
-              🔔
-              <div id="notifBadge"></div>
-            </button>
-
-            <!-- Notification Dropdown -->
-            <div id="notifDropdown">
-              <div class="notif-header">Notifications</div>
-              <div id="notifList">
-                <div class="notif-empty">No notifications yet</div>
-              </div>
-            </div>
-          </div>
-
           <div class="user-avatar" id="userAvatar" title="Logout" onclick="logout()">?</div>
+        </div>
+        <!-- Hidden notification state (bell removed; JS still needs these elements) -->
+        <div style="display:none">
+          <div id="notifBadge"></div>
+          <div id="notifDropdown"><div id="notifList"></div></div>
         </div>
       </div>
 
@@ -961,23 +937,6 @@
       document.getElementById('userAvatar').textContent = initials.toUpperCase();
     }
     window.setUserInitials = setUserInitials;
-
-    // Notification bell active state
-    window.toggleNotifications = function() {
-      const dd = document.getElementById('notifDropdown');
-      const btn = document.getElementById('notifBellBtn');
-      dd.classList.toggle('open');
-      btn.classList.toggle('active', dd.classList.contains('open'));
-    };
-
-    document.addEventListener('click', e => {
-      const dd = document.getElementById('notifDropdown');
-      const btn = document.getElementById('notifBellBtn');
-      if (!dd.contains(e.target) && !btn.contains(e.target)) {
-        dd.classList.remove('open');
-        btn.classList.remove('active');
-      }
-    });
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");

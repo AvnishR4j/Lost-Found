@@ -303,8 +303,8 @@ document.addEventListener("click", e => {
 // Match Details Modal
 window.openMatchDetails = async (notifId, lostItemId, foundItemId, matchScore) => {
   await updateDoc(doc(db, "notifications", notifId), { read: true });
-  $("notifDropdown").classList.remove("open");
-  $("notifBellBtn").classList.remove("active");
+  $("notifDropdown")?.classList.remove("open");
+  $("notifBellBtn")?.classList.remove("active");
 
   const [lostDoc, foundDoc] = await Promise.all([getDoc(doc(db, "items", lostItemId)), getDoc(doc(db, "items", foundItemId))]);
   const lostItem = lostDoc.exists() ? { id: lostDoc.id, ...lostDoc.data() } : null;
