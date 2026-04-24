@@ -142,15 +142,14 @@
       cursor: pointer;
     }
 
-    /* ── Notification dropdown ─────────────────────────────── */
+    /* ── Notification panel ────────────────────────────────── */
     #notifDropdown {
-      position: absolute; top: 68px; right: 20px; left: 20px;
+      position: absolute; top: 0; left: 0; right: 0;
+      padding: 76px 18px 16px;
       background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      border-bottom: 1px solid var(--border);
       z-index: 100;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      max-height: 320px; overflow-y: auto;
       display: none;
     }
     #notifDropdown.open { display: block; }
@@ -413,8 +412,8 @@
       text-transform: capitalize; background: transparent;
     }
     .toggle-btn.lost-active {
-      background: rgba(239,68,68,0.15); color: #f87171;
-      border-color: rgba(239,68,68,0.35);
+      background: rgba(120,15,15,0.95); color: #ffaaaa;
+      border-color: rgba(180,40,40,0.8);
     }
     .toggle-btn.found-active {
       background: rgba(134,239,172,0.12); color: #86efac;
@@ -467,8 +466,8 @@
     .panel-footer { padding: 12px 20px 28px; flex-shrink: 0; }
 
     .btn-post {
-      width: 100%; padding: 15px; border-radius: 14px;
-      background: linear-gradient(135deg, var(--accent), #d97706);
+      width: 100%; padding: 15px; border-radius: 99px;
+      background: linear-gradient(90deg, #f5a623, #f7b733);
       color: #0f0e0d; border: none; cursor: pointer;
       font-family: 'Space Grotesk', sans-serif;
       font-weight: 700; font-size: 15px;
@@ -763,7 +762,7 @@
 
           <div class="field-group">
             <label class="field-label" for="description">Description</label>
-            <textarea class="field-textarea" id="description" rows="3" placeholder="Any details that help identify it…"></textarea>
+            <textarea class="field-textarea" id="description" style="height:84.6333px" placeholder="Any details that help identify it…"></textarea>
           </div>
 
           <div class="field-group">
