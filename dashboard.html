@@ -771,14 +771,22 @@
             <input class="field-input" id="location" placeholder="e.g. Block C Cafeteria" />
           </div>
 
-          <div class="field-group" style="margin-bottom:24px">
+          <div class="field-group">
             <label class="field-label" for="phone">Contact number</label>
             <input class="field-input" id="phone" placeholder="10-digit mobile number" maxlength="10" />
+          </div>
+
+          <div class="field-group" style="margin-bottom:24px">
+            <label class="field-label">Photo (optional)</label>
+            <input id="photo" type="file" accept="image/*" class="field-input" style="padding:8px 14px;cursor:pointer" onchange="previewPhoto(this)" />
+            <input id="photoCamera" type="file" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)" />
+            <button type="button" onclick="document.getElementById('photoCamera').click()" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);cursor:pointer;font-family:inherit;font-size:13px">📷 Take Photo with Camera</button>
+            <img id="photoPreview" src="" alt="" style="display:none;margin-top:10px;max-height:180px;width:100%;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,0.1)" />
           </div>
         </div>
 
         <div class="panel-footer">
-          <button class="btn-post" onclick="postItem()">Post &amp; Find Matches →</button>
+          <button class="btn-post" onclick="postItem()">+ Post an Item</button>
           <p id="msg"></p>
         </div>
       </div>
@@ -957,6 +965,20 @@
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
+    }
+
+    function previewPhoto(input) {
+      const preview = document.getElementById("photoPreview");
+      if (input.files && input.files[0]) {
+        const dt = new DataTransfer();
+        dt.items.add(input.files[0]);
+        document.getElementById("photo").files = dt.files;
+        preview.src = URL.createObjectURL(input.files[0]);
+        preview.style.display = "block";
+      } else {
+        preview.src = "";
+        preview.style.display = "none";
+      }
     }
   </script>
 </body>

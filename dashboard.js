@@ -2,6 +2,37 @@ import { auth, db } from "./firebase.js";
 import { collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, serverTimestamp, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+const CLOUDINARY_CLOUD = "dr9detyn6";
+const CLOUDINARY_PRESET = "lost_found";
+
+function compressImage(file, maxWidth = 1024, quality = 0.75) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(resolve, "image/jpeg", quality);
+    };
+    img.src = url;
+  });
+}
+
+async function uploadToCloudinary(file) {
+  const compressed = await compressImage(file);
+  const form = new FormData();
+  form.append("file", compressed, "photo.jpg");
+  form.append("upload_preset", CLOUDINARY_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, { method: "POST", body: form });
+  if (!res.ok) { const err = await res.json(); throw new Error(err.error?.message || "Upload failed"); }
+  const data = await res.json();
+  return data.secure_url;
+}
+
 const ADMIN_EMAILS = ["admin@thapar.edu", "araj3_be24@thapar.edu"];
 const MATCH_THRESHOLD = 50;
 const WEIGHTS = { category: 40, location: 30, keywords: 30 };
@@ -124,13 +155,26 @@ window.postItem = async () => {
   const user = auth.currentUser;
   if (!user) return msg.innerText = "Session expired. Please login again.";
 
-  const docRef = await addDoc(collection(db, "items"), { type, category, title, description, location, phone, email: user.email, uid: user.uid, status: "open", createdAt: serverTimestamp(), expiresAt: Date.now() + 3 * 24 * 60 * 60 * 1000 });
+  let imageUrl = null;
+  const photoFile = $("photo")?.files?.[0];
+  if (photoFile) {
+    msg.style.color = '#f59e0b';
+    msg.innerText = "Uploading photo…";
+    try {
+      imageUrl = await uploadToCloudinary(photoFile);
+    } catch(e) {
+      return msg.innerText = "Photo upload failed. Try a smaller image or skip the photo.";
+    }
+  }
+
+  const docRef = await addDoc(collection(db, "items"), { type, category, title, description, location, phone, imageUrl, email: user.email, uid: user.uid, status: "open", createdAt: serverTimestamp(), expiresAt: Date.now() + 3 * 24 * 60 * 60 * 1000 });
 
   const matchCount = await findMatches({ id: docRef.id, type, category, title, description, location, phone, email: user.email, uid: user.uid });
   msg.style.color = '#86efac';
   msg.innerText = matchCount > 0 ? `Item posted! Found ${matchCount} potential match${matchCount > 1 ? 'es' : ''}!` : "Item posted! We'll notify you if we find matches.";
 
   ["title", "description", "location", "phone"].forEach(id => $(id).value = "");
+  if ($("photo")) { $("photo").value = ""; const prev = $("photoPreview"); if (prev) { prev.src = ""; prev.classList.add("hidden"); } }
   // Reset category pills
   document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
   $("category").value = "ID Card";
@@ -175,6 +219,7 @@ async function loadItems() {
         </div>
       </div>
       <p class="card-body">${escHtml(item.description)}</p>
+      ${item.imageUrl ? `<img src="${item.imageUrl}" alt="Item photo" style="max-height:200px;width:100%;object-fit:cover;border-radius:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.1)" loading="lazy" />` : ''}
       <div class="card-footer">
         <div class="card-location"><span>📍</span><span>${escHtml(item.location)}</span></div>
         <div class="card-actions">
