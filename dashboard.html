@@ -447,6 +447,7 @@
       padding-bottom: max(20px, calc(env(safe-area-inset-bottom, 8px) + 8px));
       flex-shrink: 0;
     }
+    .kb-open .panel-footer { display: none; }
 
     .btn-post {
       width: 100%; padding: 17px; border-radius: 99px;
@@ -947,9 +948,12 @@
     window.setUserInitials = setUserInitials;
 
     // Set exact app height using visualViewport for Android/iOS PWA accuracy
+    const _fullH = window.screen.height;
     function setAppHeight() {
       const h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
       document.documentElement.style.setProperty('--app-h', h + 'px');
+      const keyboardOpen = h < _fullH * 0.75;
+      document.body.classList.toggle('kb-open', keyboardOpen);
     }
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
