@@ -929,6 +929,9 @@
 
       setTimeout(() => {
         closePostPanel();
+        // refresh feed and scroll to top so new item is visible
+        if (window.loadItems) window.loadItems();
+        setTimeout(() => { const feed = document.getElementById('items'); if (feed) feed.scrollTop = 0; }, 350);
         // show toast on dashboard
         const toast = document.createElement('div');
         toast.textContent = hasMatch ? '🎯 Match found! Check notifications.' : '✅ Item posted successfully!';
