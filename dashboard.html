@@ -40,7 +40,6 @@
 
     html, body {
       height: 100%;
-      height: 100dvh;
       overflow: hidden;
       margin: 0; padding: 0;
     }
@@ -52,9 +51,6 @@
       display: flex;
       justify-content: center;
       align-items: stretch;
-      position: fixed;
-      width: 100%;
-      top: 0; left: 0; right: 0; bottom: 0;
     }
 
     body::before {
@@ -71,7 +67,8 @@
     .app {
       width: 100%;
       max-width: 480px;
-      height: 100%;
+      height: 100vh;
+      height: var(--app-h, 100dvh);
       display: flex;
       flex-direction: column;
       background: var(--bg);
@@ -81,9 +78,9 @@
     }
 
     @media (min-width: 520px) {
-      body { align-items: center; position: static; height: 100dvh; }
+      body { align-items: center; }
       .app {
-        height: 92dvh;
+        height: min(var(--app-h, 92dvh), 860px);
         max-height: 860px;
         border-radius: 28px;
         border: 1px solid var(--border);
@@ -309,8 +306,8 @@
 
     /* ── Post FAB ─────────────────────────────────────────── */
     .fab-area {
-      padding: 0 20px 28px;
-      padding-bottom: max(28px, calc(16px + env(safe-area-inset-bottom)));
+      padding: 0 20px;
+      padding-bottom: max(44px, calc(env(safe-area-inset-bottom, 20px) + 20px));
       flex-shrink: 0;
     }
 
@@ -330,6 +327,11 @@
     .fab-btn:active { transform: translateY(0); }
 
     /* ── Post Item Panel (full-screen) ───────────────────── */
+    #postFormView {
+      display: flex; flex-direction: column;
+      flex: 1; min-height: 0;
+    }
+
     #postPanel {
       position: absolute; inset: 0;
       background: var(--bg);
@@ -395,9 +397,12 @@
     .toggle-btn.inactive { color: var(--muted); }
 
     .panel-body {
-      flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 20px;
+      flex: 1; min-height: 0;
+      overflow-y: auto; overflow-x: hidden;
+      padding: 0 20px;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
     .panel-body::-webkit-scrollbar { display: none; }
 
@@ -438,10 +443,9 @@
     .field-select option { background: var(--bg2); }
 
     .panel-footer {
-      padding: 12px 20px 50px;
-      padding-bottom: max(50px, calc(24px + env(safe-area-inset-bottom)));
+      padding: 12px 20px;
+      padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 24px) + 28px));
       flex-shrink: 0;
-      min-height: 127.267px;
     }
 
     .btn-post {
@@ -767,7 +771,7 @@
       </div>
 
       <!-- Match/Success view (shown after posting) -->
-      <div id="postMatchView" style="display:none; flex-direction:column; height:100%">
+      <div id="postMatchView" style="display:none; flex-direction:column; flex:1; min-height:0">
         <div class="panel-header">
           <div class="panel-header-row">
             <button class="btn-back" onclick="closePostPanel()">All</button>
@@ -941,6 +945,18 @@
       document.getElementById('userAvatar').textContent = initials.toUpperCase();
     }
     window.setUserInitials = setUserInitials;
+
+    // Set exact app height using visualViewport for Android/iOS PWA accuracy
+    function setAppHeight() {
+      const h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+      document.documentElement.style.setProperty('--app-h', h + 'px');
+    }
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', setAppHeight);
+      window.visualViewport.addEventListener('scroll', setAppHeight);
+    }
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
