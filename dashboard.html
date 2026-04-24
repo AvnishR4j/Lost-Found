@@ -165,11 +165,11 @@
     #notifList { padding: 8px; }
 
     .notif-item {
-      padding: 10px 10px;
-      border-radius: 10px;
-      margin-bottom: 6px;
+      padding: 14px;
+      border-radius: 14px;
+      margin-bottom: 10px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.18s;
       display: flex; gap: 10px; align-items: flex-start;
     }
     .notif-item:last-child { margin-bottom: 0; }
@@ -177,17 +177,18 @@
       background: var(--accent-15);
       border: 1px solid var(--accent-30);
     }
-    .notif-item.read { background: rgba(255,255,255,0.03); }
-    .notif-item:hover { background: rgba(255,255,255,0.07); }
+    .notif-item.read { background: rgba(255,255,255,0.04); }
+    .notif-item:hover { background: rgba(255,255,255,0.08); }
 
-    .notif-item .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .notif-item .icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
     .notif-item .content { flex: 1; min-width: 0; }
-    .notif-item .title { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
-    .notif-item .msg { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .notif-item .title { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 4px; }
+    .notif-item .msg { font-size: 12px; color: var(--muted); line-height: 1.5; }
     .notif-item .score-badge {
-      display: inline-block; margin-top: 5px;
-      padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      display: inline-block; margin-top: 8px;
+      padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700;
       background: var(--accent-20); color: var(--accent);
+      border: 1px solid var(--accent-40);
     }
 
     .notif-empty { padding: 20px; text-align: center; font-size: 12px; color: var(--muted); }
@@ -342,70 +343,55 @@
     }
     .fab-btn:active { transform: translateY(0); }
 
-    /* ── Post Item Panel (slide-up) ───────────────────────── */
-    .panel-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 200;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    .panel-overlay.open { display: flex; }
-
-    .panel {
-      width: 100%; max-width: 480px;
+    /* ── Post Item Panel (full-screen) ───────────────────── */
+    #postPanel {
+      position: absolute; inset: 0;
       background: var(--bg);
-      border-radius: 24px 24px 0 0;
-      border: 1px solid var(--border);
-      border-bottom: none;
-      max-height: 92vh;
-      display: flex; flex-direction: column;
-      animation: slidePanel 0.3s cubic-bezier(0.34,1.2,0.64,1);
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+    }
+    #postPanel.open {
+      display: flex;
+      animation: slidePanel 0.3s cubic-bezier(0.34,1.1,0.64,1);
     }
     @keyframes slidePanel {
       from { transform: translateY(100%); }
       to   { transform: translateY(0); }
     }
 
-    .panel-handle {
-      width: 36px; height: 4px; border-radius: 2px;
-      background: var(--border);
-      margin: 10px auto 0;
-      flex-shrink: 0;
-    }
-
     .panel-header {
-      padding: 14px 20px 0; flex-shrink: 0;
+      padding: 72px 20px 0; flex-shrink: 0;
     }
 
     .panel-header-row {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 12px; margin-bottom: 22px;
     }
 
     .btn-back {
-      width: 34px; height: 34px; border-radius: 10px;
-      background: var(--card); border: 1px solid var(--border);
-      cursor: pointer; color: var(--text); font-size: 16px;
-      display: flex; align-items: center; justify-content: center;
+      padding: 6px 14px; border-radius: 10px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15);
+      cursor: pointer; color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; font-weight: 700;
       transition: all 0.2s;
     }
-    .btn-back:hover { background: rgba(255,255,255,0.08); }
+    .btn-back:hover { background: rgba(255,255,255,0.18); }
 
     .panel-title { font-size: 17px; font-weight: 600; color: var(--text); }
 
     /* Lost/found toggle */
     .type-toggle {
       display: flex;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 12px; padding: 3px;
-      margin-bottom: 18px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px; padding: 4px;
+      margin-bottom: 22px;
     }
 
     .toggle-btn {
-      flex: 1; padding: 9px; border-radius: 10px;
-      font-size: 13px; font-weight: 600;
+      flex: 1; padding: 11px; border-radius: 9px;
+      font-size: 14px; font-weight: 600;
       cursor: pointer; transition: all 0.2s;
       border: 1px solid transparent;
       font-family: 'Space Grotesk', sans-serif;
@@ -429,9 +415,9 @@
 
     .field-group { margin-bottom: 14px; }
     .field-label {
-      font-size: 11px; color: var(--muted);
-      letter-spacing: 0.06em; text-transform: uppercase;
-      display: block; margin-bottom: 6px;
+      font-size: 10px; color: var(--muted);
+      letter-spacing: 0.09em; text-transform: uppercase;
+      display: block; margin-bottom: 8px; font-weight: 600;
     }
 
     /* Category pills */
@@ -449,10 +435,10 @@
     }
 
     .field-input, .field-textarea, .field-select {
-      width: 100%; padding: 12px 14px; border-radius: 12px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      color: var(--text); font-size: 13px;
+      width: 100%; padding: 14px 16px; border-radius: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text); font-size: 14px;
       font-family: 'Space Grotesk', sans-serif;
       outline: none; transition: border-color 0.2s;
     }
@@ -463,7 +449,7 @@
     .field-textarea { resize: none; line-height: 1.5; }
     .field-select option { background: var(--bg2); }
 
-    .panel-footer { padding: 12px 20px 28px; flex-shrink: 0; }
+    .panel-footer { padding: 12px 20px 50px; flex-shrink: 0; }
 
     .btn-post {
       width: 100%; padding: 15px; border-radius: 99px;
@@ -707,18 +693,14 @@
       <button class="fab-btn" onclick="openPostPanel()">+ Post an Item</button>
     </div>
 
-  </div><!-- /.app -->
-
-  <!-- ── Post Item Panel ─────────────────────────────────── -->
-  <div class="panel-overlay" id="postPanel" onclick="handlePanelOverlayClick(event)">
-    <div class="panel">
-      <div class="panel-handle"></div>
+    <!-- ── Post Item Panel (full-screen) ────────────────── -->
+    <div id="postPanel">
 
       <!-- Form view -->
       <div id="postFormView">
         <div class="panel-header">
           <div class="panel-header-row">
-            <button class="btn-back" onclick="closePostPanel()">←</button>
+            <button class="btn-back" onclick="closePostPanel()">All</button>
             <span class="panel-title">Report Item</span>
           </div>
 
@@ -791,18 +773,36 @@
       </div>
 
       <!-- Loading view (shown while posting) -->
-      <div id="postLoadingView" style="display:none">
-        <div class="post-loading" id="postLoadingContent">
-          <div class="step-icon" id="postStepIcon">📤</div>
-          <div>
-            <div class="step-title" id="postStepTitle">Posting your item…</div>
-            <div class="step-sub" id="postStepSub"></div>
-          </div>
+      <div id="postLoadingView" style="display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:40px">
+        <div class="step-icon" id="postStepIcon">📤</div>
+        <div style="text-align:center">
+          <div class="step-title" id="postStepTitle">Posting your item…</div>
+          <div class="step-sub" id="postStepSub">Please wait</div>
+        </div>
+        <div class="dots">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
       </div>
 
-    </div>
-  </div>
+      <!-- Match/Success view (shown after posting) -->
+      <div id="postMatchView" style="display:none; flex-direction:column; height:100%">
+        <div class="panel-header">
+          <div class="panel-header-row">
+            <button class="btn-back" onclick="closePostPanel()">All</button>
+            <span class="panel-title" id="matchViewTitle">🎯 Match Found!</span>
+          </div>
+        </div>
+        <div style="flex:1; overflow-y:auto; padding:0 20px">
+          <div id="matchViewContent"></div>
+        </div>
+        <div class="panel-footer">
+          <button class="btn-post" onclick="closePostPanel()">Done →</button>
+        </div>
+      </div>
+
+    </div><!-- /#postPanel -->
+
+  </div><!-- /.app -->
 
   <!-- ── Resolve Modal ───────────────────────────────────── -->
   <div id="resolveModal" class="hidden">
@@ -867,13 +867,17 @@
       document.getElementById('postPanel').classList.add('open');
       document.getElementById('postFormView').style.display = '';
       document.getElementById('postLoadingView').style.display = 'none';
+      document.getElementById('postMatchView').style.display = 'none';
       document.getElementById('msg').textContent = '';
     }
     function closePostPanel() {
       document.getElementById('postPanel').classList.remove('open');
-    }
-    function handlePanelOverlayClick(e) {
-      if (e.target === document.getElementById('postPanel')) closePostPanel();
+      setTimeout(() => {
+        document.getElementById('postFormView').style.display = '';
+        document.getElementById('postLoadingView').style.display = 'none';
+        document.getElementById('postMatchView').style.display = 'none';
+        document.getElementById('msg').textContent = '';
+      }, 300);
     }
     window.closePostPanel = closePostPanel;
 
@@ -900,35 +904,46 @@
     }
     window.setCategory = setCategory;
 
-    // Override postItem to show loading state
+    // Override postItem to show 3-step loading then match/success view
     const _origPostItem = window.postItem;
     window.postItem = async function() {
       const form = document.getElementById('postFormView');
       const loading = document.getElementById('postLoadingView');
       form.style.display = 'none';
-      loading.style.display = '';
-      document.getElementById('postStepTitle').textContent = 'Posting your item…';
-      document.getElementById('postStepIcon').textContent = '📤';
-      document.getElementById('postStepSub').textContent = '';
+      loading.style.display = 'flex';
 
-      setTimeout(() => {
-        document.getElementById('postStepTitle').textContent = 'Searching for matches…';
-        document.getElementById('postStepIcon').textContent = '🔍';
-        document.getElementById('postStepSub').textContent = 'Scanning campus reports';
-        const dotArea = document.getElementById('postLoadingContent');
-        if (!dotArea.querySelector('.dots')) {
-          const d = document.createElement('div');
-          d.className = 'dots';
-          d.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-          dotArea.appendChild(d);
-        }
-      }, 900);
+      const setStep = (icon, title, sub) => {
+        document.getElementById('postStepIcon').textContent = icon;
+        document.getElementById('postStepTitle').textContent = title;
+        document.getElementById('postStepSub').textContent = sub;
+      };
+
+      setStep('📤', 'Posting your item…', 'Uploading to campus board');
+      setTimeout(() => setStep('🔍', 'Searching for matches…', 'Scanning campus reports'), 900);
+      setTimeout(() => setStep('🤖', 'Running AI analysis…', 'Checking keywords & location'), 1700);
 
       if (_origPostItem) {
         await _origPostItem();
       }
 
-      setTimeout(() => closePostPanel(), 400);
+      // Show match/success view
+      const msgText = document.getElementById('msg').textContent || '';
+      const hasMatch = msgText.includes('match');
+      loading.style.display = 'none';
+      const matchView = document.getElementById('postMatchView');
+      matchView.style.display = 'flex';
+      document.getElementById('matchViewTitle').textContent = hasMatch ? '🎯 Match Found!' : '✅ Posted!';
+      document.getElementById('matchViewContent').innerHTML = hasMatch
+        ? `<div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px">
+            <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:52px;font-weight:700;color:#f59e0b;line-height:1">🎯</div>
+            <div style="font-size:16px;font-weight:600;color:#f5f4f0;margin-top:12px">${msgText.replace('✅ ','')}</div>
+            <div style="font-size:12px;color:rgba(245,244,240,0.45);margin-top:6px">Check your notifications for details</div>
+          </div>`
+        : `<div style="background:rgba(134,239,172,0.10);border:1px solid rgba(134,239,172,0.25);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px">
+            <div style="font-size:52px;line-height:1">✅</div>
+            <div style="font-size:16px;font-weight:600;color:#f5f4f0;margin-top:12px">${msgText.replace('✅ ','')}</div>
+            <div style="font-size:12px;color:rgba(245,244,240,0.45);margin-top:6px">We'll notify you if we find a match</div>
+          </div>`;
     };
 
     // Update item count after items load
