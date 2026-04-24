@@ -658,7 +658,7 @@
           <h1>lost &amp; found</h1>
         </div>
         <div class="header-actions">
-          <div class="user-avatar" id="userAvatar" title="Logout" onclick="logout()">?</div>
+          <div class="user-avatar" id="userAvatar" title="Logout" onclick="if(confirm('Log out?')) logout()">?</div>
         </div>
         <!-- Hidden notification state (bell removed; JS still needs these elements) -->
         <div style="display:none">
@@ -752,7 +752,7 @@
 
           <div class="field-group">
             <label class="field-label" for="phone">Contact number</label>
-            <input class="field-input" id="phone" placeholder="10-digit mobile number" maxlength="10" />
+            <input class="field-input" id="phone" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="10-digit mobile number" maxlength="10" />
           </div>
 
           <div class="field-group" style="margin-bottom:24px">
@@ -876,6 +876,7 @@
       document.getElementById('msg').textContent = '';
       history.pushState({ panel: 'post' }, '');
     }
+    let _closingViaBack = false;
     function closePostPanel() {
       document.getElementById('postPanel').classList.remove('open');
       setTimeout(() => {
@@ -884,13 +885,17 @@
         document.getElementById('postMatchView').style.display = 'none';
         document.getElementById('msg').textContent = '';
       }, 300);
+      // Consume the pushed history state if we're not already handling popstate
+      if (!_closingViaBack && history.state?.panel === 'post') history.back();
     }
     window.closePostPanel = closePostPanel;
 
     // Intercept Android back gesture / button to close panel instead of exiting
     window.addEventListener('popstate', e => {
       if (document.getElementById('postPanel').classList.contains('open')) {
+        _closingViaBack = true;
         closePostPanel();
+        _closingViaBack = false;
       }
     });
 
@@ -917,7 +922,8 @@
     }
     window.setCategory = setCategory;
 
-    // Override postItem to show 3-step loading then match/success view
+    // Override postItem AFTER dashboard.js module has loaded (modules are deferred)
+    window.addEventListener('load', function() {
     const _origPostItem = window.postItem;
     window.postItem = async function() {
       const form = document.getElementById('postFormView');
@@ -967,6 +973,8 @@
         setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 2800);
       }, 1400);
     };
+
+    }); // end load override
 
     // Update item count after items load
     const origLoadItems = window.loadItems;

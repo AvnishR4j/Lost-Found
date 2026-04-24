@@ -143,14 +143,17 @@ async function findMatches(newItem) {
 }
 
 // Post Item
+let _posting = false;
 window.postItem = async () => {
+  if (_posting) return;
+  _posting = true;
   const [type, category, title, description, location, phone] = ["type", "category", "title", "description", "location", "phone"].map(id => $(id).value.trim());
   const msg = $("msg");
   msg.style.color = '#f87171';
   msg.innerText = "";
 
-  if (!title || !description || !location || !phone) return msg.innerText = "Please fill all fields";
-  if (!/^\d{10}$/.test(phone)) return msg.innerText = "Phone number must be 10 digits";
+  if (!title || !description || !location || !phone) { _posting = false; return msg.innerText = "Please fill all fields"; }
+  if (!/^\d{10}$/.test(phone)) { _posting = false; return msg.innerText = "Phone number must be 10 digits"; }
 
   const user = auth.currentUser;
   if (!user) return msg.innerText = "Session expired. Please login again.";
@@ -173,8 +176,9 @@ window.postItem = async () => {
   msg.style.color = '#86efac';
   msg.innerText = matchCount > 0 ? `Item posted! Found ${matchCount} potential match${matchCount > 1 ? 'es' : ''}!` : "Item posted! We'll notify you if we find matches.";
 
+  _posting = false;
   ["title", "description", "location", "phone"].forEach(id => $(id).value = "");
-  if ($("photo")) { $("photo").value = ""; const prev = $("photoPreview"); if (prev) { prev.src = ""; prev.classList.add("hidden"); } }
+  if ($("photo")) { $("photo").value = ""; const prev = $("photoPreview"); if (prev) { prev.src = ""; prev.style.display = "none"; } }
   // Reset category pills
   document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
   $("category").value = "ID Card";
