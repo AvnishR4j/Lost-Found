@@ -148,36 +148,6 @@
         width: 100%;
       }
 
-      /* Post panel stays as centered mobile frame on desktop */
-      #postPanel {
-        position: fixed;
-        inset: auto;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 480px;
-        height: min(92dvh, 860px);
-        border-radius: 28px;
-        border: 1px solid var(--border);
-        box-shadow: 0 32px 80px rgba(0,0,0,0.7);
-        z-index: 200;
-      }
-
-      #postPanel::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.55);
-        z-index: -1;
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-        border-radius: 0;
-      }
-
-      #postPanel.open {
-        animation: none;
-        display: flex;
-      }
     }
 
     @media (min-width: 1300px) {
